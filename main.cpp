@@ -7,6 +7,8 @@
 
 #include <stdexcept>
 #include <iostream>
+#include <random>
+#include <limits>
 
 #include <boost/optional/optional.hpp>
 #include <boost/exception/diagnostic_information.hpp>
@@ -38,7 +40,8 @@ void createTable( pqxx::work& tr )
           "create table if not exists test("
           " id bigserial primary key,"
           " data text,"
-          " status text"
+          " status text,"
+          " binary_data bytea"
           ")";
 
      tr.exec( query );
@@ -147,16 +150,18 @@ std::uint64_t insertData(
      pqxx::work& tr
      , const boost::optional< std::string >& data
      , const boost::optional< Status >& status
+     , const std::vector< std::uint8_t >& binary
      )
 {
      static constexpr auto query =
-          "insert into test (data, status)"
-          " values ($1, $2)"
+          "insert into test (data, status, binary_data)"
+          " values ($1, $2, $3)"
           " returning id";
 
      return tr.parameterized( query )
           ( data )
           ( status )
+          ( tr.esc_raw( binary.data(), binary.size() ), !binary.empty() )
           .exec()
           .front() // ссылка на строку (первая)
           .front() // ссылка на столбец строки (первый)
@@ -208,8 +213,26 @@ TestRowVector loadAllData( pqxx::dbtransaction& tr, const std::string& tableName
 }
 
 
+std::vector< std::uint8_t > generateRandomBinary( std::uint32_t len )
+{
+     static std::default_random_engine dre{
+          static_cast< std::default_random_engine::result_type >( clock() )
+     };
+     static std::uniform_int_distribution< std::uint8_t > distr{
+          std::numeric_limits< std::uint8_t >::min(),
+          std::numeric_limits< std::uint8_t >::max()
+     };
+
+     std::vector< std::uint8_t > result( len );
+     std::generate( result.begin(), result.end(), std::bind( distr, std::ref( dre ) ) );
+     return result;
+}
+
+
 int main( int argc, char** argv )
 {
+     const auto randomBin = generateRandomBinary( 32 );
+
      try
      {
           pqxx::connection conn{ "postgresql://alexen:ALEXEN@localhost:6432/test" };
@@ -217,16 +240,18 @@ int main( int argc, char** argv )
 
           createTable( tr );
 
-          insertData( tr, std::string{ "first string" }, Status::Initial );
-          insertData( tr, std::string{ "second string" }, Status::Intermediate );
-          insertData( tr, std::string{ "third string" }, Status::Finished );
-          insertData( tr, boost::none, Status::Initial );
-          insertData( tr, std::string{ "fourth string" }, boost::none );
+          insertData( tr, std::string{ "first string" }, Status::Initial, {} );
+          insertData( tr, std::string{ "second string" }, Status::Intermediate, {} );
+          insertData( tr, std::string{ "third string" }, Status::Finished, {} );
+          insertData( tr, boost::none, Status::Initial, {} );
+          insertData( tr, std::string{ "fourth string" }, boost::none, {} );
 
-          insertData( tr, tr.esc( "Peter O'Tool Escaped" ), boost::none );
-          insertData( tr, tr.quote( "Peter O'Tool Quoted" ), boost::none );
-          insertData( tr, tr.quote( 1000 ), boost::none );
-          insertData( tr, tr.quote( 2000 ), boost::none );
+          insertData( tr, tr.esc( "Peter O'Tool Escaped" ), boost::none, {} );
+          insertData( tr, tr.quote( "Peter O'Tool Quoted" ), boost::none, {} );
+          insertData( tr, tr.quote( 1000 ), boost::none, {} );
+          insertData( tr, tr.quote( 2000 ), boost::none, {} );
+
+          insertData( tr, std::string{ "Random sequence of bytes" }, Status::Intermediate, randomBin );
 
           std::cout << "Loaded data:\n";
           for( auto&& each: loadAllData( tr, "test" ) )
