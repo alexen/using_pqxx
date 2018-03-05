@@ -223,6 +223,11 @@ int main( int argc, char** argv )
           insertData( tr, boost::none, Status::Initial );
           insertData( tr, std::string{ "fourth string" }, boost::none );
 
+          insertData( tr, tr.esc( "Peter O'Tool Escaped" ), boost::none );
+          insertData( tr, tr.quote( "Peter O'Tool Quoted" ), boost::none );
+          insertData( tr, tr.quote( 1000 ), boost::none );
+          insertData( tr, tr.quote( 2000 ), boost::none );
+
           std::cout << "Loaded data:\n";
           for( auto&& each: loadAllData( tr ) )
           {
@@ -233,8 +238,7 @@ int main( int argc, char** argv )
      }
      catch( const std::exception& e )
      {
-          std::cerr << "exception: "
-               << boost::diagnostic_information( e ) << '\n';
+          std::cerr << "exception: " << boost::diagnostic_information( e ) << '\n';
           return 1;
      }
      return 0;
