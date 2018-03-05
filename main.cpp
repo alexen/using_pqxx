@@ -202,9 +202,9 @@ TestRowVector fromResul( const pqxx::result& result )
 }
 
 
-TestRowVector loadAllData( pqxx::dbtransaction& tr )
+TestRowVector loadAllData( pqxx::dbtransaction& tr, const std::string& tableName )
 {
-     return fromResul( tr.exec( "select id, status, data from test" ) );
+     return fromResul( tr.exec( "select id, status, data from " + tr.quote_name( tableName ) ) );
 }
 
 
@@ -229,7 +229,7 @@ int main( int argc, char** argv )
           insertData( tr, tr.quote( 2000 ), boost::none );
 
           std::cout << "Loaded data:\n";
-          for( auto&& each: loadAllData( tr ) )
+          for( auto&& each: loadAllData( tr, "test" ) )
           {
                std::cout << each << "\n";
           }
