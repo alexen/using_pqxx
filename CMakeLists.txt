@@ -9,10 +9,12 @@ set(CMAKE_CXX_FLAGS_DEBUG "-ggdb3 -O0 -fno-inline")
 find_package(Pqxx REQUIRED)
 include_directories(${Pqxx_INCLUDE_DIRS})
 
+add_subdirectory(dao)
+
 set(EXECNAME using_pqxx)
 add_executable(${EXECNAME}
      main.cpp
 )
 target_link_libraries(${EXECNAME}
-     ${Pqxx_LIBRARIES}
+     dao
 )
