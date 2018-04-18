@@ -10,13 +10,15 @@
 #include <random>
 #include <limits>
 
+#include <boost/lexical_cast.hpp>
 #include <boost/optional/optional.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 
 #include <pqxx/connection>
 #include <pqxx/transaction>
 #include <pqxx/result>
-#include <pqxx/strconv>
+
+#include <pqxx_ext/type_map.h>
 
 
 template< typename T >
@@ -75,72 +77,49 @@ std::ostream& operator<<( std::ostream& ostr, Status s )
 }
 
 
-namespace pqxx {
-
-
-template< typename T >
-struct string_traits< boost::optional< T > >
-{
-     static constexpr const char* name() noexcept { return "optional value"; }
-     static constexpr bool has_null() noexcept { return true; }
-     static bool is_null( boost::optional< T > val ) noexcept { return !val; }
-     static Status null() { return boost::none; }
-     static void from_string( const char* str, boost::optional< T >& out )
-     {
-          T val;
-          string_traits< T >::from_string( str, val );
-          out = val;
-     }
-     static std::string to_string( const boost::optional< T >& opt )
-     {
-          return string_traits< T >::to_string( *opt );
-     }
-};
+namespace boost {
 
 
 template<>
-struct string_traits< Status >
+std::string lexical_cast< std::string, Status >( const Status& s )
 {
-     static constexpr const char* name() noexcept { return "Status"; }
-     static constexpr bool has_null() noexcept { return false; }
-     static bool is_null( Status s ) noexcept { return false; }
-     static Status null() { internal::throw_null_conversion(name()); }
-     static void from_string( const char* str, Status& out )
+     switch( s )
      {
-          if( std::strcmp( str, "INITIAL" ) == 0 )
-          {
-               out = Status::Initial;
-          }
-          else if( std::strcmp( str, "INTERMEDIATE" ) == 0 )
-          {
-               out = Status::Intermediate;
-          }
-          else if( std::strcmp( str, "FINISHED" ) == 0 )
-          {
-               out = Status::Finished;
-          }
-          else
-          {
-               BOOST_THROW_EXCEPTION( std::runtime_error{ "unexpected type" } );
-          }
+          case Status::Initial:      return "INITIAL";
+          case Status::Intermediate: return "INTERMEDIATE";
+          case Status::Finished:     return "FINISHED";
+          default:                   ;
      }
-     static std::string to_string( Status s )
+     BOOST_THROW_EXCEPTION( boost::bad_lexical_cast{} );
+}
+
+
+template<>
+Status lexical_cast< Status, std::string >( const std::string& s )
+{
+     if( s == "INITIAL" )
      {
-          switch( s )
-          {
-               case Status::Initial:
-                    return "INITIAL";
-               case Status::Intermediate:
-                    return "INTERMEDIATE";
-               case Status::Finished:
-                    return "FINISHED";
-               default:
-                    ;
-          }
-          BOOST_THROW_EXCEPTION( std::runtime_error{ "unexpected type" } );
-          return "";
+          return Status::Initial;
      }
-};
+     else if( s == "INTERMEDIATE" )
+     {
+          return Status::Intermediate;
+     }
+     else if( s == "FINISHED" )
+     {
+          return Status::Finished;
+     }
+     BOOST_THROW_EXCEPTION( boost::bad_lexical_cast{} );
+}
+
+
+} // namespace boost
+
+
+namespace pqxx {
+
+
+PQXX_STRING_TRAITS_SPEC( Status );
 
 
 } // namespace pqxx
@@ -235,7 +214,7 @@ int main( int argc, char** argv )
 
      try
      {
-          pqxx::connection conn{ "postgresql://alexen:ALEXEN@localhost:6432/test" };
+          pqxx::connection conn{ "postgresql://dbuser@localhost:6432/testdb" };
           pqxx::work tr{ conn };
 
           createTable( tr );
