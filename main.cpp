@@ -104,17 +104,17 @@ std::string hex( const std::vector< char >& vec )
 }
 
 
-std::vector< std::uint8_t > generateRandomBinary( std::uint32_t len )
+std::vector< char > generateRandomBinary( std::uint32_t len )
 {
      static std::default_random_engine dre{
           static_cast< std::default_random_engine::result_type >( clock() )
      };
-     static std::uniform_int_distribution< std::uint8_t > distr{
-          std::numeric_limits< std::uint8_t >::min(),
-          std::numeric_limits< std::uint8_t >::max()
+     static std::uniform_int_distribution< char > distr{
+          std::numeric_limits< char >::min(),
+          std::numeric_limits< char >::max()
      };
 
-     std::vector< std::uint8_t > result( len );
+     std::vector< char > result( len );
      std::generate( result.begin(), result.end(), std::bind( distr, std::ref( dre ) ) );
      return result;
 }
@@ -139,11 +139,15 @@ int main( int argc, char** argv )
           dao::table_1::insert( tr, tr.quote( 1000 ) );
           dao::table_1::insert( tr, tr.quote( 2000 ) );
 
+          const auto& bin = generateRandomBinary( 32 );
+
+          std::cout << "binary: " << hex( bin ) << '\n';
+
           dao::table_1::insert(
                tr,
                "Random sequence of bytes",
                dao::Status::Initial,
-               generateRandomBinary( 32 )
+               bin
                );
 
           std::cout << "Loaded data:\n";
