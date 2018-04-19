@@ -78,6 +78,32 @@ std::ostream& operator<<( std::ostream& ostr, const dao::table_1::TestRow& row )
 }
 
 
+std::string hex( const char* ptr, const std::size_t len )
+{
+     static constexpr auto hexLetter = "0123456789abcdef";
+     std::string result;
+     result.reserve( len * 2 );
+     for( std::size_t i = 0; i < len; ++i )
+     {
+          result.push_back( hexLetter[ (ptr[ i ] & 0xf0) >> 4 ] );
+          result.push_back( hexLetter[ ptr[ i ] & 0x0f ] );
+     }
+     return result;
+}
+
+
+std::string hex( const std::string& str )
+{
+     return hex( str.data(), str.size() );
+}
+
+
+std::string hex( const std::vector< char >& vec )
+{
+     return hex( vec.data(), vec.size() );
+}
+
+
 std::vector< std::uint8_t > generateRandomBinary( std::uint32_t len )
 {
      static std::default_random_engine dre{
