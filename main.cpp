@@ -120,11 +120,58 @@ std::vector< char > generateRandomBinary( std::uint32_t len )
 }
 
 
+template< typename Iter, typename Quoter >
+std::string separated( const std::string& sep, Iter begin, Iter end, Quoter quoter )
+{
+     std::ostringstream ostr;
+     if( begin != end )
+     {
+          ostr << quoter( *begin );
+          for( ++begin; begin != end; ++begin )
+          {
+               ostr << sep << quoter( *begin );
+          }
+     }
+     return ostr.str();
+}
+
+
 int main( int argc, char** argv )
 {
      try
      {
+          const auto ints = { 1, 2, 3, 4, 5 };
+          const auto strs = {
+               "my",
+               "Bonny's",
+               "is",
+               "over",
+               "the",
+               "o'cean"
+          };
+
           pqxx::connection conn{ "postgresql://dbuser@localhost:6432/testdb" };
+
+          std::cout
+               << "ints: " << pqxx::separated_list( ", ", ints.begin(), ints.end() ) << '\n'
+               << "strs: " << pqxx::separated_list( ", ", strs.begin(), strs.end() ) << '\n'
+               << "ints: " <<
+               separated( ", ", ints.begin(), ints.end(),
+                    []( int n )
+                    {
+                         return std::to_string( n );
+                    }
+                    ) << '\n'
+               << "strs: " <<
+               separated( ", ", strs.begin(), strs.end(),
+                    [ &conn ]( const char* str )
+                    {
+                         return conn.esc( str );
+                    }
+                    ) << '\n'
+               ;
+          return 0;
+
           pqxx::work tr{ conn };
 
           dao::table_1::createTable( tr, true );
