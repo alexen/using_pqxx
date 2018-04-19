@@ -110,7 +110,7 @@ bool insert(
      pqxx::work& tr
      , const std::string& comment
      , const boost::optional< Status >& status
-     , const std::vector< std::uint8_t >& binary
+     , const std::vector< char >& binary
      )
 {
      static constexpr auto query =
@@ -120,7 +120,7 @@ bool insert(
      return tr.parameterized( query )
           ( comment )
           ( status )
-          ( tr.esc_raw( binary.data(), binary.size() ), !binary.empty() )
+          ( tr.esc_raw( reinterpret_cast< const std::uint8_t* >( binary.data() ), binary.size() ), !binary.empty() )
           .exec()
           .affected_rows() > 0;
 }

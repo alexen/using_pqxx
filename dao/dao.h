@@ -37,7 +37,7 @@ bool insert(
      pqxx::work& tr
      , const std::string& comment
      , const boost::optional< Status >& status = boost::none
-     , const std::vector< std::uint8_t >& binary = {}
+     , const std::vector< char >& binary = {}
 );
 
 
