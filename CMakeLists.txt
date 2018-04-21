@@ -5,10 +5,12 @@ include_directories("${CMAKE_SOURCE_DIR}")
 
 add_definitions(-std=c++17)
 set(CMAKE_CXX_FLAGS_DEBUG "-ggdb3 -O0 -fno-inline")
+set(BUILD_SHARED_LIBS ON)
 
 find_package(Pqxx REQUIRED)
 include_directories(${Pqxx_INCLUDE_DIRS})
 
+add_subdirectory(tools)
 add_subdirectory(dao)
 
 set(EXECNAME using_pqxx)
@@ -17,4 +19,5 @@ add_executable(${EXECNAME}
 )
 target_link_libraries(${EXECNAME}
      dao
+     tools
 )
