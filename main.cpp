@@ -17,44 +17,11 @@
 
 #include <dao/types.h>
 #include <dao/dao.h>
+#include <dao/io.h>
+#include <dao/tools.h>
 #include <tools/convert.h>
 #include <tools/random.h>
 #include <tools/io.h>
-#include <dao/io.h>
-
-
-template< typename Iter, typename Quoter >
-void separatedList(
-     std::ostream& ostr
-     , Iter begin
-     , Iter end
-     , Quoter&& quoter
-     , const std::string& sep = ", "
-)
-{
-     if( begin != end )
-     {
-          ostr << quoter( *begin );
-          for( ++begin; begin != end; ++begin )
-          {
-               ostr << sep << quoter( *begin );
-          }
-     }
-}
-
-
-template< typename Iter, typename Quoter >
-std::string separatedList(
-     Iter begin
-     , Iter end
-     , Quoter&& quoter
-     , const std::string& sep = ", "
-)
-{
-     std::ostringstream ostr;
-     separatedList( ostr, begin, end, quoter, sep );
-     return ostr.str();
-}
 
 
 int main( int argc, char** argv )
@@ -77,14 +44,14 @@ int main( int argc, char** argv )
                << "ints: " << pqxx::separated_list( ", ", ints.begin(), ints.end() ) << '\n'
                << "strs: " << pqxx::separated_list( ", ", strs.begin(), strs.end() ) << '\n'
                << "ints: " <<
-               separatedList( ints.begin(), ints.end(),
+               dao::tools::separatedList( ints.begin(), ints.end(),
                     []( int n )
                     {
                          return std::to_string( n );
                     }
                     ) << '\n'
                << "strs: " <<
-               separatedList( strs.begin(), strs.end(),
+               dao::tools::separatedList( strs.begin(), strs.end(),
                     [ &conn ]( const char* str )
                     {
                          return conn.esc( str );
@@ -93,7 +60,7 @@ int main( int argc, char** argv )
                ;
 
           std::cout << "*ints: ";
-          separatedList( std::cout, ints.begin(), ints.end(),
+          dao::tools::separatedList( std::cout, ints.begin(), ints.end(),
                []( auto& val )
                {
                     return val;
@@ -101,7 +68,7 @@ int main( int argc, char** argv )
           );
           std::cout << '\n';
           std::cout << "*strs: ";
-          separatedList( std::cout, strs.begin(), strs.end(),
+          dao::tools::separatedList( std::cout, strs.begin(), strs.end(),
                [ &conn ]( const auto& s )
                {
                     return conn.quote( s );
