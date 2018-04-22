@@ -115,8 +115,8 @@ int main( int argc, char** argv )
 
           dao::table_1::insert( tr, "Initial status expected", dao::Status::Initial );
           dao::table_1::insert( tr, "This is intermediate", dao::Status::Intermediate );
-          dao::table_1::insert( tr, "Something is finished!", dao::Status::Finished, {} );
-          dao::table_1::insert( tr, "Oops! Unknown status!", boost::none, {} );
+          dao::table_1::insert( tr, "Something is finished!", dao::Status::Finished );
+          dao::table_1::insert( tr, "Oops! Unknown status!" );
 
           dao::table_1::insert( tr, tr.esc( "Peter O'Tool Escaped" ) );
           dao::table_1::insert( tr, tr.quote( "Peter O'Tool Quoted" ) );
