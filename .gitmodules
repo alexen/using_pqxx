@@ -1,3 +1,6 @@
 [submodule "googletest"]
 	path = googletest
 	url = https://github.com/google/googletest
+[submodule "cmake"]
+	path = cmake
+	url = git@github.com:alexen/cmake
